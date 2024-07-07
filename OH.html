@@ -147,6 +147,7 @@
                 
                 // 검색된 데이터가 없을 경우 "No results found" 메시지 추가
                 if (results.length === 0) {
+                    results.push(headers); // 헤더 추가
                     results.push(["No results found"]);
                 } else {
                     results.unshift(headers); // 헤더 추가
@@ -156,7 +157,7 @@
                 const resultsContainer = document.getElementById('results');
                 resultsContainer.innerHTML = '';
                 resultsContainer.appendChild(resultsTable);
-                document.getElementById('log').textContent += '\nSearch completed';
+                document.getElementById('log').textContent = '\nSearch completed';
             } catch (error) {
                 document.getElementById('log').textContent = `Error: ${error.message}`;
             }
