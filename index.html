@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OH</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            max-width: 100%; /* 화면에 맞게 최대 너비 설정 */
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            overflow-x: auto; /* 가로 스크롤바 추가 */
+        }
+        input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .table-container {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+            font-size: 12px; /* 기본 글자 크기 */
+        }
+        th {
+            background-color: #f4f4f9;
+        }
+        th, td:first-child {
+            position: sticky;
+            left: 0;
+            background-color: #f4f4f9;
+            z-index: 1;
+        }
+        .log {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>OH</h1>
+    <div class="container">
+        <input type="text" id="searchQuery" placeholder="Enter search term">
+        <button onclick="searchCSV()">Search</button>
+        <div class="table-container">
+            <table id="results"></table>
+        </div>
+        <pre id="log" class="log"></pre>
+    </div>
+
+    <script>
+        const csvFileUrl = 'https://donheekang.github.io/oh/OH.csv'; // CSV 파일 URL
+
+        async function fetchCSV() {
+            try {
+                const response = await fetch(csvFileUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvContent = await response.text();
+                return csvContent;
+            } catch (error) {
+                document.getElementById('log').textContent = `Error: ${error.message}`;
+                throw error;
+            }
+        }
+
+        function csvToArray(csv) {
+            const rows = csv.split('\n').map(row => row.split(','));
+            return rows;
+        }
+
+        function arrayToTable(arr) {
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+
+            arr.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                row.forEach((cell, cellIndex) => {
+                    const td = document.createElement(index === 0 ? 'th' : 'td');
+                    td.textContent = cell;
+                    tr.appendChild(td);
+                });
+                if (index === 0) {
+                    thead.appendChild(tr);
+                } else {
+                    tbody.appendChild(tr);
+                }
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            return table;
+        }
+
+        async function searchCSV() {
+            const searchQuery = document.getElementById('searchQuery').value.toLowerCase().trim();
+            
+            // 검색어가 비어있으면 검색을 수행하지 않고 로그 메시지 표시
+            if (!searchQuery) {
+                document.getElementById('results').innerHTML = '';
+                document.getElementById('log').textContent = 'Please enter a search term.';
+                return;
+            }
+
+            try {
+                const csvContent = await fetchCSV();
+                const dataArray = csvToArray(csvContent);
+                const headers = dataArray[0];
+                const results = dataArray.slice(1).filter(row => row.some(cell => cell && cell.toLowerCase().includes(searchQuery)));
+                
+                // 검색된 데이터가 없을 경우 "No results found" 메시지 추가
+                if (results.length === 0) {
+                    results.push(headers); // 헤더 추가
+                    results.push(["No results found"]);
+                } else {
+                    results.unshift(headers); // 헤더 추가
+                }
+                
+                const resultsTable = arrayToTable(results);
+                const resultsContainer = document.getElementById('results');
+                resultsContainer.innerHTML = '';
+                resultsContainer.appendChild(resultsTable);
+                document.getElementById('log').textContent = '\nSearch completed';
+            } catch (error) {
+                document.getElementById('log').textContent = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
